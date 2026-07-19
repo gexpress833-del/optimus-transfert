@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Optimus-Transfert
 
-## Getting Started
+Plateforme SaaS de liens de paiement sécurisés pour la République Démocratique du Congo.
 
-First, run the development server:
+## Stack technique
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Next.js** 16.2.10 (App Router, Turbopack)
+- **React** 19.2.4
+- **TypeScript** 5 (Strict Mode)
+- **Tailwind CSS** v4 (`@tailwindcss/postcss`)
+- **Supabase** (PostgreSQL, Auth, Storage, RLS)
+- **TanStack Query** 5
+- **React Hook Form** 7 + **Zod** 4
+- **Lucide React** (icônes)
+- **shadcn/ui** (composants)
+- **ESLint** 9
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Démarrage
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Cloner le projet
+2. `npm install`
+3. Copier `.env.local.example` vers `.env.local` et remplir les credentials
+4. Executer `supabase/schema.sql` dans le SQL Editor Supabase
+5. `npm run dev`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Variables d'environnement
 
-## Learn More
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Cle anon Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | Cle service role (server only) |
+| `FLEXPAY_API_URL` | URL API FlexPay |
+| `FLEXPAY_API_KEY` | Cle API FlexPay |
+| `FLEXPAY_WEBHOOK_SECRET` | Secret pour verifier les webhooks |
+| `NEXT_PUBLIC_APP_URL` | URL de l'application |
 
-To learn more about Next.js, take a look at the following resources:
+## Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+src/
+  app/                  -> Routes (App Router)
+    (auth)/             -> Pages auth (login, register)
+    (dashboard)/        -> Dashboard merchant
+    (admin)/            -> Dashboard admin
+    api/payments/       -> API routes (initiate, webhook)
+    pay/[reference]/    -> Page de paiement publique
+  actions/              -> Server Actions
+  components/           -> Composants UI (shadcn/ui + dashboard)
+  config/               -> Configuration (app, routes, navigation)
+  lib/supabase/         -> Clients Supabase (browser, server, admin)
+  providers/            -> Providers React (QueryProvider)
+  services/payments/    -> Abstraction provider de paiement (FlexPay)
+  types/                -> Types TypeScript (database)
+  utils/                -> Utilitaires (formatage)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Fonctionnalites
 
-## Deploy on Vercel
+- Authentification Supabase (email/mot de passe)
+- Gestion d'entreprise (logo, devise par defaut)
+- Wallets USD et CDF avec historique des transactions
+- Liens de paiement avec URL publique securisee
+- Integration FlexPay (architecture abstraite remplacable)
+- Commission automatique (10% configurable)
+- Demandes de retrait (pending -> approved -> paid)
+- Dashboard admin (utilisateurs, entreprises, paiements, commissions, audit logs)
+- RLS sur toutes les tables
+- Proxy (middleware) pour protection des routes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploiement
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+npm run build
+npm start
+
+Deployable sur Vercel, Netlify ou tout hosting Node.js.
