@@ -17,7 +17,7 @@ export default async function PaymentPage({
   const supabase = await createClient();
 
   // Amount is ALWAYS fetched server-side — client cannot modify it
-  const { data: link } = await supabase
+  const { data: link, error: linkError } = await supabase
     .from("payment_links")
     .select(
       `
@@ -33,6 +33,10 @@ export default async function PaymentPage({
     .eq("reference", reference)
     .eq("status", "active")
     .maybeSingle();
+
+  if (linkError) {
+    console.error("Payment page query error:", linkError);
+  }
 
   if (!link) {
     notFound();

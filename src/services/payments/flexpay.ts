@@ -35,6 +35,8 @@ export class FlexPayProvider implements PaymentProvider {
   async initiatePayment(
     params: InitiatePaymentParams
   ): Promise<InitiatePaymentResult> {
+    const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL}/pay/${params.reference}`;
+
     const response = await fetch(this.baseUrl, {
       method: "POST",
       headers: {
@@ -43,16 +45,16 @@ export class FlexPayProvider implements PaymentProvider {
       },
       body: JSON.stringify({
         merchant: this.merchant,
+        type: 2, // 2 = card payment (1 = mobile money)
         reference: params.reference,
         amount: params.amount,
         currency: params.currency,
         description: params.description,
-        email: params.customerEmail,
-        phone: params.customerPhone,
-        callback_url: params.callbackUrl,
-        approve_url: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${params.reference}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${params.reference}`,
-        decline_url: `${process.env.NEXT_PUBLIC_APP_URL}/pay/${params.reference}`,
+        callbackUrl: params.callbackUrl,
+        approveUrl: returnUrl,
+        cancelUrl: returnUrl,
+        declineUrl: returnUrl,
+        homeUrl: returnUrl,
       }),
     });
 
@@ -65,9 +67,15 @@ export class FlexPayProvider implements PaymentProvider {
 
     const data = await response.json();
 
-    const providerReference = data.reference ?? data.orderNumber ?? "";
+    // FlexPay returns: { code, message, orderNumber, url }
+    // The url field is the direct redirect URL for card payment
     const orderNumber = data.orderNumber ?? "";
-    const redirectUrl = `${this.cardUrl}/${orderNumber}`;
+    const providerReference = orderNumber || (data.reference ?? "");
+    const redirectUrl = data.url ?? (orderNumber ? `${this.cardUrl}/${orderNumber}` : "");
+
+    if (!redirectUrl) {
+      throw new Error(`FlexPay did not return a redirect URL. Response: ${JSON.stringify(data)}`);
+    }
 
     return {
       providerReference,

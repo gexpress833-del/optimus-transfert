@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getPaymentProvider } from "@/services/payments";
 import { APP_CONFIG } from "@/config/app";
 
@@ -51,8 +52,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a pending payment record
-    const { data: payment, error: paymentError } = await supabase
+    // Create a pending payment record (admin client — public route has no session)
+    const adminClient = createAdminClient();
+    const { data: payment, error: paymentError } = await adminClient
       .from("payments")
       .insert({
         payment_link_id: link.id,
@@ -69,8 +71,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (paymentError) {
+      console.error("Payment insert error:", paymentError);
       return NextResponse.json(
-        { error: "Erreur lors de la création du paiement" },
+        { error: "Erreur lors de la création du paiement", details: paymentError.message },
         { status: 500 }
       );
     }
@@ -91,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Update payment with provider reference
-    await supabase
+    await adminClient
       .from("payments")
       .update({
         provider_reference: result.providerReference,
@@ -106,7 +109,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Payment initiation error:", error);
     return NextResponse.json(
-      { error: "Erreur lors de l'initiation du paiement" },
+      { error: "Erreur lors de l'initiation du paiement", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
